@@ -5,3 +5,5 @@ __pycache__/
 models/
 results/
 .ipynb_checkpoints/
+.conda/
+.env/
