@@ -1,3 +1,4 @@
+import encodings
 from typing import List, Dict
 import torch
 from transformers import AutoTokenizer
@@ -32,37 +33,33 @@ class NERPreprocessor:
         Assumes tokens are already WordPiece-tokenized.
         """
 
-        input_ids = []
-        attention_masks = []
-        label_ids = []
+        encodings = self.tokenizer(
+                    tokens,
+                    is_split_into_words=True,
+                    truncation=True,
+                    padding="max_length",
+                    max_length=self.max_length,
+                    return_offsets_mapping=False)
 
-        for token_seq, label_seq in zip(tokens, labels):
+        encoded_labels = []
 
-            # Convert tokens to IDs using tokenizer vocab
-            ids = self.tokenizer.convert_tokens_to_ids(token_seq)
+        for i, label_seq in enumerate(labels):
+            word_ids = encodings.word_ids(batch_index=i)
+            label_ids = []
 
-            # Truncate
-            ids = ids[: self.max_length]
-            label_seq = label_seq[: self.max_length]
-
-            # Attention mask
-            mask = [1] * len(ids)
-
-            # Padding
-            padding_len = self.max_length - len(ids)
-            ids += [self.tokenizer.pad_token_id] * padding_len
-            mask += [0] * padding_len
-            label_seq += ["O"] * padding_len
-
-            # Map labels to IDs
-            label_ids_seq = [self.label2id[label] for label in label_seq]
-
-            input_ids.append(ids)
-            attention_masks.append(mask)
-            label_ids.append(label_ids_seq)
+            for word_id in word_ids:
+                if word_id is None:
+                    label_ids.append(-100)        # special tokens
+                elif word_id >= len(label_seq):
+                # 🔑 CRITICAL FIX: truncated words
+                    label_ids.append(-100)
+                else:
+                    label_ids.append(self.label2id[label_seq[word_id]])
+            
+            encoded_labels.append(label_ids)
 
         return {
-            "input_ids": torch.tensor(input_ids),
-            "attention_mask": torch.tensor(attention_masks),
-            "labels": torch.tensor(label_ids),
+        "input_ids": torch.tensor(encodings["input_ids"], dtype=torch.long),
+        "attention_mask": torch.tensor(encodings["attention_mask"], dtype=torch.long),
+        "labels": torch.tensor(encoded_labels, dtype=torch.long),
         }
