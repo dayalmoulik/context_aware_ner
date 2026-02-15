@@ -12,8 +12,10 @@ def main():
     # Configuration
     # -----------------------------
     DATA_PATH = "data/raw/Dataset.csv"
-    MODEL_NAME = "bert-base-cased"
-    OUTPUT_DIR = "models/bert_ner"
+#    MODEL_NAME = "bert-base-cased"              #for BERT
+    MODEL_NAME = "distilbert-base-cased"      #for DistilBERT (faster training) 
+#    OUTPUT_DIR = "models/bert_ner"             #for BERT
+    OUTPUT_DIR = "models/distilbert_ner"        #for DistilBERT (faster training)
     MAX_LENGTH = 128
     BATCH_SIZE = 8
     EPOCHS = 3

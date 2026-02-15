@@ -1,89 +1,155 @@
-import streamlit as st
 import sys
 import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-# Absolute path to project root
-PROJECT_ROOT = r"C:\Users\admin\BITS\Sem 3\NLPA\context_aware_ner"
-
-if PROJECT_ROOT not in sys.path:
-    sys.path.insert(0, PROJECT_ROOT)
-
-
+import streamlit as st
+from collections import Counter
 from src.inference import NERInference
-from src.masking import mask_entities
+from src.masking import mask_entities, reconstruct_with_highlight
 
-# -----------------------------
-# Page config
-# -----------------------------
+# -----------------------------------
+# Page Configuration
+# -----------------------------------
 st.set_page_config(
-    page_title="Context-Aware PII Masking",
-    layout="wide"
+    page_title="Context-Aware NER",
+    layout="wide",
 )
 
-st.title("🔐 Context-Aware Entity Recognition & Masking")
-st.write(
-    "This application identifies sensitive entities using a fine-tuned "
-    "BERT-based NER model and masks them based on linguistic context."
+st.title("🔐 Context-Aware Entity Recognition & Sensitivity Masking")
+
+st.markdown(
+"""
+This application uses a fine-tuned **BERT transformer model**
+to detect sensitive entities using contextual understanding.
+"""
 )
 
-# -----------------------------
-# Load model (cached)
-# -----------------------------
+# -----------------------------------
+# Sidebar Info
+# -----------------------------------
+st.sidebar.title("📘 Model Information")
+st.sidebar.write("Model: BERT")
+st.sidebar.write("Task: Token Classification (BIO)")
+st.sidebar.write("Fine-tuned on custom dataset")
+
+# -----------------------------------
+# Load Model
+# -----------------------------------
 @st.cache_resource
 def load_model():
     return NERInference("models/bert_ner")
 
 ner = load_model()
 
-# -----------------------------
-# Text input section
-# -----------------------------
-st.subheader("📝 Enter Text")
-
-input_text = st.text_area(
-    "Type or paste text below:",
-    height=150,
-    placeholder="Please create a PowerPoint presentation for Casey Dietrich in Stephenville."
+# -----------------------------------
+# Output Mode Selection
+# -----------------------------------
+mode = st.radio(
+    "Select Output Mode:",
+    ["Mask Only", "Highlight Only", "Both"]
 )
 
-if st.button("Mask Text"):
-    if input_text.strip():
-        predictions = ner.predict(input_text)
-        masked_output = mask_entities(predictions)
+# -----------------------------------
+# Text Input Section
+# -----------------------------------
+input_text = st.text_area(
+    "Enter text:",
+    height=150,
+    placeholder="Patient Ravi Kumar visited Apollo Hospital in Mumbai."
+)
 
-        st.subheader("🔒 Masked Output")
-        st.success(masked_output)
+if st.button("Analyze Text"):
+
+    if input_text.strip():
+
+        predictions = ner.predict(input_text)
+
+        col1, col2 = st.columns(2)
+
+        # -----------------------------------
+        # Masked Output
+        # -----------------------------------
+        if mode in ["Mask Only", "Both"]:
+            with col1:
+                st.subheader("🔒 Masked Output")
+                masked_output = mask_entities(predictions)
+                st.success(masked_output)
+
+                st.download_button(
+                    label="⬇ Download Masked Text",
+                    data=masked_output,
+                    file_name="masked_output.txt",
+                    mime="text/plain"
+                )
+
+        # -----------------------------------
+        # Highlighted Output
+        # -----------------------------------
+        if mode in ["Highlight Only", "Both"]:
+            with col2:
+                st.subheader("🎨 Highlighted Entities")
+                highlighted_html, color_map = reconstruct_with_highlight(predictions)
+                st.markdown(highlighted_html, unsafe_allow_html=True)
+
+        # -----------------------------------
+        # Entity Summary
+        # -----------------------------------
+        entity_types = [
+            label.split("-")[1]
+            for _, label in predictions
+            if label.startswith("B-")
+        ]
+
+        counts = Counter(entity_types)
+
+        if counts:
+            st.subheader("📊 Entity Summary")
+            for entity, count in counts.items():
+                st.write(f"**{entity}** : {count}")
+
+        # -----------------------------------
+        # Dynamic Legend
+        # -----------------------------------
+        if mode in ["Highlight Only", "Both"]:
+            st.subheader("🎨 Entity Legend")
+            for entity, color in color_map.items():
+                st.markdown(
+                    f"<span style='background-color:{color};color:white;"
+                    f"padding:6px;border-radius:6px;margin-right:8px;'>"
+                    f"{entity}</span>",
+                    unsafe_allow_html=True
+                )
+
     else:
         st.warning("Please enter some text.")
 
-# -----------------------------
-# File upload section
-# -----------------------------
-st.subheader("📂 Upload Text File")
+# -----------------------------------
+# File Upload Section
+# -----------------------------------
+st.subheader("📂 Batch Processing (Upload .txt File)")
 
-uploaded_file = st.file_uploader(
-    "Upload a .txt file for batch processing",
-    type=["txt"]
-)
+uploaded_file = st.file_uploader("Upload a text file", type=["txt"])
 
 if uploaded_file:
     content = uploaded_file.read().decode("utf-8")
-
     predictions = ner.predict(content)
-    masked_output = mask_entities(predictions)
 
     st.subheader("🔒 Masked File Output")
+    masked_output = mask_entities(predictions)
     st.success(masked_output)
 
-# -----------------------------
-# Entity legend
-# -----------------------------
-st.subheader("🎨 Entity Legend")
+    st.subheader("🎨 Highlighted File Output")
+    highlighted_html, color_map = reconstruct_with_highlight(predictions)
+    st.markdown(highlighted_html, unsafe_allow_html=True)
 
-st.markdown(
-    """
-    - 🟦 **FULLNAME** – Person Names  
-    - 🟩 **CITY** – Location Names  
-    - 🟥 **Other Sensitive Entities** – Contextually detected  
-    """
-)
+    st.subheader("🎨 Entity Legend")
+    for entity, color in color_map.items():
+        st.markdown(
+            f"<span style='background-color:{color};color:white;"
+            f"padding:6px;border-radius:6px;margin-right:8px;'>"
+            f"{entity}</span>",
+            unsafe_allow_html=True
+        )
+
+st.markdown("---")
+st.caption("Built using a fine-tuned BERT model for context-aware PII detection.")

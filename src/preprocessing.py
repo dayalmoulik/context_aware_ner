@@ -7,7 +7,7 @@ from transformers import AutoTokenizer
 class NERPreprocessor:
     def __init__(
         self,
-        model_name: str = "bert-base-cased",
+        model_name: str = "distilbert-base-cased",                 # for BERT-based models, use "bert-base-cased"
         max_length: int = 128,
     ):
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)

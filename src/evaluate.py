@@ -25,7 +25,7 @@ def main():
     # =============================
     DATA_PATH = "data/raw/Dataset.csv"
     MODEL_DIR = "models/bert_ner"
-    MODEL_NAME = "bert-base-cased"
+    MODEL_NAME = "distilbert-base-cased"        # For Bert-based models, use "bert-base-cased" or similar
     MAX_LENGTH = 128
     BATCH_SIZE = 8
     RESULTS_DIR = "results"
