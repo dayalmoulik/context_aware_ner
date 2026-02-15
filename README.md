@@ -16,17 +16,104 @@ The application supports:
 
 ```
 Context-Aware-NER/
+│   .gitignore
+│   LICENSE
+│   nlpa_env.yml
+│   README.md
+│   requirements.txt
+│   run.ps1
+│   __init__.py
 │
-├── app/                # Streamlit web application
-├── data/
-│   └── raw/            # Dataset.csv
-├── docs/               # Design & research document, screenshots
-├── models/             # Saved fine-tuned model (generated after training)
-├── notebooks/          # Optional exploratory notebooks
-├── results/            # Evaluation outputs (metrics, confusion matrix)
-├── src/                # Core source code
-├── requirements.txt
-└── README.md
+├───app
+│   │   app.py
+│   │   utils.py
+│   │
+│   └───__pycache__
+│           app.cpython-310.pyc
+│
+├───data
+│   ├───processed
+│   └───raw
+│           Dataset.csv
+│
+├───docs
+│   └───Screenshots
+│           01_dataset_preview.png
+│
+├───models
+│   ├───bert_ner
+│   │   │   config.json
+│   │   │   model.safetensors
+│   │   │   special_tokens_map.json
+│   │   │   tokenizer.json
+│   │   │   tokenizer_config.json
+│   │   │   training_args.bin
+│   │   │   vocab.txt
+│   │   │
+│   │   └───checkpoint-5928
+│   │           config.json
+│   │           model.safetensors
+│   │           optimizer.pt
+│   │           rng_state.pth
+│   │           scheduler.pt
+│   │           special_tokens_map.json
+│   │           tokenizer.json
+│   │           tokenizer_config.json
+│   │           trainer_state.json
+│   │           training_args.bin
+│   │           vocab.txt
+│   │
+│   └───distilbert_ner
+│       │   config.json
+│       │   model.safetensors
+│       │   special_tokens_map.json
+│       │   tokenizer.json
+│       │   tokenizer_config.json
+│       │   training_args.bin
+│       │   vocab.txt
+│       │
+│       └───checkpoint-5928
+│               config.json
+│               model.safetensors
+│               optimizer.pt
+│               rng_state.pth
+│               scheduler.pt
+│               special_tokens_map.json
+│               tokenizer.json
+│               tokenizer_config.json
+│               trainer_state.json
+│               training_args.bin
+│               vocab.txt
+│
+├───notebooks
+├───results
+│       classification_report_entity_level.txt
+│       confusion_matrix_errors.png
+│       confusion_matrix_normalized.png
+│       entity_f1_scores.png
+│
+└───src
+    │   config.py
+    │   data_loader.py
+    │   evaluate.py
+    │   inference.py
+    │   masking.py
+    │   model.py
+    │   preprocessing.py
+    │   train.py
+    │   __init__.py
+    │
+    └───__pycache__
+            data_loader.cpython-310.pyc
+            evaluate.cpython-310.pyc
+            inference.cpython-310.pyc
+            masking.cpython-310.pyc
+            model.cpython-310.pyc
+            preprocessing.cpython-310.pyc
+            train.cpython-310.pyc
+            train.cpython-313.pyc
+            __init__.cpython-310.pyc
+            __init__.cpython-313.pyc
 ```
 
 ---
@@ -73,6 +160,11 @@ To fine-tune the BERT-based NER model, run:
 ```powershell
 python src/train.py
 ```
+or run as module:
+
+```powershell
+python -m src.train
+```
 
 This will:
 - Load and preprocess the dataset
@@ -91,6 +183,12 @@ To evaluate performance and generate metrics:
 
 ```powershell
 python src/evaluate.py
+```
+
+or run as module:
+
+```powershell
+python -m src.evaluate
 ```
 
 Outputs:
